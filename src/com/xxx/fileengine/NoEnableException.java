@@ -2,6 +2,11 @@ package com.xxx.fileengine;
 
 public class NoEnableException extends Exception {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6697254810771700135L;
+
 	public NoEnableException() {
 		// TODO 自动生成的构造函数存根
 	}
