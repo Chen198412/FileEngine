@@ -2,6 +2,8 @@ package com.xxx.fileengine;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 import com.xxx.fileengine.util.OSTool;
 
@@ -11,7 +13,25 @@ import com.xxx.fileengine.util.OSTool;
  * @author CKF
  *
  */
-public class EngineBuilder {
+public class EngineBuilder implements Builder<Engine>{
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(EnableDelFile, EnableEngine, EnableShutdown, isClose);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		EngineBuilder other = (EngineBuilder) obj;
+		return EnableDelFile == other.EnableDelFile && EnableEngine == other.EnableEngine
+				&& EnableShutdown == other.EnableShutdown && isClose == other.isClose;
+	}
 
 	private boolean EnableShutdown;
 
@@ -20,12 +40,17 @@ public class EngineBuilder {
 	private boolean EnableEngine;
 
 	private boolean isClose;
+	
+	private boolean EnableLogger;
+	
+	private final Logger logger = Logger.getLogger("info");
 
-	public EngineBuilder(boolean enableShutdown, boolean enableDelFile, boolean enableEngine) {
+	public EngineBuilder(boolean enableShutdown, boolean enableDelFile, boolean enableEngine, boolean enablelogger) {
 		super();
 		EnableShutdown = enableShutdown;
 		EnableDelFile = enableDelFile;
 		EnableEngine = enableEngine;
+		EnableLogger = enablelogger;
 	}
 
 	public EngineBuilder setEnableShutdown(boolean b) {
@@ -42,17 +67,22 @@ public class EngineBuilder {
 		this.EnableEngine = b;
 		return this;
 	}
+	
+	public EngineBuilder setEnableLogger(boolean b) {
+		this.EnableLogger = b;
+		return this;
+	}
 
 	public EngineBuilder() {
-		this(true, true, true);
+		this(true, true, true, true);
 	}
 
 	public EngineBuilder(boolean enableEngine) {
-		this(true, true, enableEngine);
+		this(true, true, enableEngine, true);
 	}
 
 	public EngineBuilder(boolean enableShutdown, boolean enableDelFile) {
-		this(enableShutdown, enableDelFile, true);
+		this(enableShutdown, enableDelFile, true, true);
 	}
 
 	/**
@@ -60,6 +90,7 @@ public class EngineBuilder {
 	 * 
 	 * @return 构造完成的引擎。
 	 */
+	@Override
 	public Engine build() {
 		return new Engine() {
 
@@ -70,6 +101,9 @@ public class EngineBuilder {
 						Runtime.getRuntime().exec("shutdown /p");
 					} catch (IOException e) {
 						e.printStackTrace();
+					}
+					if(EnableLogger) {
+						logger.info("Shutdown!");
 					}
 				} else {
 					throw new NoEnableException("NoEnableShutdown or NoEnableEngine");
@@ -85,6 +119,9 @@ public class EngineBuilder {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+					if(EnableLogger) {
+						logger.info("New a File " + File + "!");
+					}
 				} else {
 					throw new NoEnableException("NoEnableEngine");
 				}
@@ -94,6 +131,9 @@ public class EngineBuilder {
 			public void delFile(File delfile) throws NoEnableException {
 				if (EnableEngine == true && isClose == false && EnableDelFile == true) {
 					delfile.delete();
+					if(EnableLogger) {
+						logger.info("Del a file " + delfile.getName() + "!");
+					}
 				} else {
 					throw new NoEnableException("NoEnableEngine");
 				}
@@ -105,6 +145,9 @@ public class EngineBuilder {
 					throw new ClosedExcepion("Is Closed");
 				} else {
 					isClose = true;
+					if(EnableLogger) {
+						logger.info("Closed!");
+					}
 				}
 			}
 
@@ -115,18 +158,28 @@ public class EngineBuilder {
 
 			@Override
 			public Process executeCommand(String cmd) throws IOException {
-				if (OSTool.getOSTYPE().equals(OSTool.OStype.WINDOWS))
+				if (OSTool.getOSTYPE().equals(OSTool.OStype.WINDOWS)) {
+					if(EnableLogger) {
+						logger.info("execute a cmd " + cmd + "!");
+					}
 					return Runtime.getRuntime().exec("cmd /c " + cmd);
-				else
+				}
+				else {
 					throw new IOException("OSException");
+				}
 			}
 
 			@Override
 			public void executeEXEFile(File file) throws IOException {
-				if (OSTool.getOSTYPE().equals(OSTool.OStype.WINDOWS))
+				if (OSTool.getOSTYPE().equals(OSTool.OStype.WINDOWS)) {
 					Runtime.getRuntime().exec(file.getAbsolutePath());
-				else
+					if(EnableLogger) {
+						logger.info("execute a EXEfile " + file.getName() + "!");
+					}
+				}
+				else {
 					throw new IOException("OSException");
+				}
 			}
 		};
 	}
